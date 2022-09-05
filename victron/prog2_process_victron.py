@@ -6,7 +6,7 @@ Created on Wed Mar 23 09:35:17 2022
 """
 import pymongo
 
-DEV_MONGO_DATABASE_URI = "mongodb+srv://<user>:<password>@cluster0.ok5iq.mongodb.net/microgrid?retryWrites=true&w=majority"
+DEV_MONGO_DATABASE_URI = "mongodb+srv://<user>:<password>@x.x.mongodb.net/<database>?retryWrites=true&w=majority"
 
 
 
