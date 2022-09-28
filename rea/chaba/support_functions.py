@@ -133,7 +133,7 @@ def get_basics(token, user_id):
     including site ID for future queries and lat/lon
 
     """
-    sites_url = 'https://vrmapi.victronenergy.com/v2/users/'+user_id+'/installations'
+    sites_url = 'https://vrmapi.victronenergy.com/v2/users/'+user_id+'/installations?extended=1'
     
     # setup header with token
     main_header = {"X-Authorization": "Bearer "+token}
@@ -248,9 +248,9 @@ def update_ssot(conn):
     base_max_string = """
                          drop table if exists max_base;
                          create table max_base as 
-                         select reading_time, avg_bat, max(get_time)
+                         select site, reading_time, max(get_time) as max_ts
                          from base
-                         group by reading_time, avg_bat;
+                         group by site, reading_time;
                      """
     
     c = conn.cursor()
@@ -260,9 +260,9 @@ def update_ssot(conn):
     pb_max_string = """
                          drop table if exists max_pb;
                          create table max_pb as 
-                         select reading_time, Pb, max(get_time)
+                         select site, reading_time, max(get_time) as max_ts
                          from pv_to_battery
-                         group by reading_time, Pb;
+                         group by site, reading_time;
                      """
     
     c = conn.cursor()
@@ -273,9 +273,9 @@ def update_ssot(conn):
     pc_max_string = """
                          drop table if exists max_pc;
                          create table max_pc as 
-                         select reading_time, Pc, max(get_time)
+                         select site, reading_time, max(get_time) as max_ts
                          from pv_to_customer
-                         group by reading_time, Pc;
+                         group by site, reading_time;
                      """
     
     c = conn.cursor()
@@ -287,9 +287,9 @@ def update_ssot(conn):
     pc_max_string = """
                          drop table if exists max_bc;
                          create table max_bc as 
-                         select reading_time, Bc, max(get_time)
+                         select site, reading_time, max(get_time) as max_ts
                          from battery_to_customer
-                         group by reading_time, Bc;
+                         group by site, reading_time;
                      """
     
     c = conn.cursor()
@@ -313,12 +313,34 @@ def update_ssot(conn):
            ,ifnull(bc.bc,0) as bc
            ,ifnull(pc.pc,0) + ifnull(bc.bc,0) as tot_c
     from
-        max_base as bs left join max_pb as pb
-            on bs.reading_time = pb.reading_time
-        left join max_pc as pc
-            on bs.reading_time = pc.reading_time
-        left join max_bc as bc
-            on bs.reading_time = bc.reading_time
+        max_base as mbase left join base as bs
+            on mbase.max_ts = bs.get_time
+            and mbase.reading_time = bs.reading_time
+            and mbase.site = bs.site
+            
+        left join max_pb as mpb
+            on mbase.reading_time = mpb.reading_time
+            and mbase.site = mpb.site
+        left join pv_to_battery as pb
+            on mbase.reading_time = pb.reading_time
+            and mbase.site = pb.site
+            and mpb.max_ts = pb.get_time
+        
+        left join max_pc as mpc
+            on mbase.reading_time = mpc.reading_time
+            and mbase.site = mpc.site
+        left join pv_to_customer as pc
+            on mbase.reading_time = pc.reading_time
+            and mbase.site = pc.site
+            and mpc.max_ts = pc.get_time       
+        
+        left join max_bc as mbc
+            on mbase.reading_time = mbc.reading_time
+            and mbase.site = mbc.site
+        left join battery_to_customer as bc
+            on mbase.reading_time = bc.reading_time
+            and mbase.site = bc.site
+            and mbc.max_ts = bc.get_time              
     """
     
     c = conn.cursor()
