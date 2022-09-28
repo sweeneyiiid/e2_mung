@@ -307,11 +307,15 @@ def update_ssot(conn):
     ssot_str = """
     drop table if exists ssot;
     create table ssot as
-    select  bs.*
+    select  bs.site
+           ,bs.reading_time
+           ,bs.avg_bat
            ,ifnull(pb.pb,0) as pb
            ,ifnull(pc.pc,0) as pc
            ,ifnull(bc.bc,0) as bc
-           ,ifnull(pc.pc,0) + ifnull(bc.bc,0) as tot_c
+           ,ifnull(pc.pc,0) + ifnull(bc.bc,0) as tot_consumed
+           ,ifnull(pc.pc,0) + ifnull(pb.pb,0) as tot_produced
+           
     from
         max_base as mbase left join base as bs
             on mbase.max_ts = bs.get_time
