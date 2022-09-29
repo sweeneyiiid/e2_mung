@@ -209,24 +209,26 @@ def get_raw(token, site, conn, start, stop):
         x['site'] = mg_id
         x['get_time'] = get_ts
         return x
-    
-    # non_standard metric
-    bs_data = pd.DataFrame(json_data['bs'])
-    bs_data.columns = ['epoch', 'avg_bat', 'min_bat', 'max_bat']
-    bs_data['reading_time'] = pd.to_datetime(bs_data.epoch, unit='ms')
-    bs_data['site'] = site
-    bs_data['get_time'] = GET_TIME
+    try:
+        # non_standard metric
+        bs_data = pd.DataFrame(json_data['bs'])
+        bs_data.columns = ['epoch', 'avg_bat', 'min_bat', 'max_bat']
+        bs_data['reading_time'] = pd.to_datetime(bs_data.epoch, unit='ms')
+        bs_data['site'] = site
+        bs_data['get_time'] = GET_TIME
 
 
-    pb_data = datasetter(json_data, 'Pb', GET_TIME, site)
-    pc_data = datasetter(json_data, 'Pc', GET_TIME, site)
-    bc_data = datasetter(json_data, 'Bc', GET_TIME, site)
+        pb_data = datasetter(json_data, 'Pb', GET_TIME, site)
+        pc_data = datasetter(json_data, 'Pc', GET_TIME, site)
+        bc_data = datasetter(json_data, 'Bc', GET_TIME, site)
 
-    bs_data.to_sql('base', conn, if_exists='append', index=False)
-    
-    pb_data.to_sql('pv_to_battery', conn, if_exists='append', index=False)
-    pc_data.to_sql('pv_to_customer', conn, if_exists='append', index=False)
-    bc_data.to_sql('battery_to_customer', conn, if_exists='append', index=False)
+        bs_data.to_sql('base', conn, if_exists='append', index=False)
+        
+        pb_data.to_sql('pv_to_battery', conn, if_exists='append', index=False)
+        pc_data.to_sql('pv_to_customer', conn, if_exists='append', index=False)
+        bc_data.to_sql('battery_to_customer', conn, if_exists='append', index=False)
+    except:
+        print('missing metric data in call, not loaded')
     
     return None
 
