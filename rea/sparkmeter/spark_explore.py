@@ -64,7 +64,23 @@ sites_json = json.loads(sites_response.text)
 
 sites_json.keys()
 
-sites_json['customers'][0]
+sites_json['customers'][0]['meters'][0]
+
+check_df = pd.DataFrame(sites_json['customers'])
+
+
+meters = []
+for i in sites_json['customers']:
+    for j in i['meters']:
+        meters.append(j)
+
+meters_df = pd.DataFrame(meters)
+
+meters_df.to_csv('./non_git/data/meters_202210281352cest.dat', index=False, sep='\t')
+
+#So comes out ok, but appears to be more detail in ground and meter sub-jsons
+
+len(sites_json['customers'][0]['meters'])
 
 
 ### Step 2.1: get specific customer
